@@ -119,13 +119,17 @@ export default function MainPage(props: MainPageProps) {
   const actionGroupIndex = useSelector(getActionGroupIndexSelector)
   const { file } = useSelector(navigatorSelector)
   const { fileAction } = useSelector(globalSelector)
+
+  //ff is fileTreeViewState
   const { focusedItem: ffFocusedItem, expandedItems: ffExpandedItems, selectedItems: ffSelectedItems, expandedItemsObj: ffExpandedItemsObj, selectedItemsObj: ffSelectedItemsObj } = useSelector(ffSelector)
+
+  //fn is nodeTreeViewState
   const { focusedItem: fnFocusedItem, expandedItems: fnExpandedItems, selectedItems: fnSelectedItems, expandedItemsObj: fnExpandedItemsObj, selectedItemsObj: fnSelectedItemsObj } = useSelector(fnSelector)
   const { futureLength, pastLength } = useSelector(hmsInfoSelector)
   // -------------------------------------------------------------- main context --------------------------------------------------------------
   const [favicon, setFavicon] = useState<string>('')
   // global action
-  const [pending, setPending] = useState<boolean>(false)
+  const [pending, setPending] = useState<boolean>(false) // tells if there are any pending running actions
   const runningActions = useRef<{ [actionName: string]: boolean }>({})
   const noRunningAction = useCallback(() => {
     return Object.keys(runningActions.current).length === 0 ? true : false
@@ -453,6 +457,11 @@ export default function MainPage(props: MainPageProps) {
     }
     if (cmdk.shift && cmdk.cmd && cmdk.key === 'KeyR') {
       onClear()
+    }
+    if ((cmdk.cmd && cmdk.key === 'KeyG')) {
+      e.preventDefault()
+      e.stopPropagation();
+      // return
     }
     if (cmdkOpen) return
 
@@ -801,6 +810,23 @@ export default function MainPage(props: MainPageProps) {
   }, [onImportProject, ffTree])
   // new
   const onNew = useCallback(async () => {
+    if (ffTree) {
+      // confirm if ffTree is changed
+      let hasChangedFile = false
+      for (let x in ffTree) {
+        const _file = ffTree[x]
+        const _fileData = _file.data as TFileNodeData
+        if (_file && _fileData.changed) {
+          hasChangedFile = true
+        }
+      }
+      if (hasChangedFile) {
+        const message = `Your changes will be lost if you don't save them. Are you sure you want to continue without saving?`
+        if (!window.confirm(message)) {
+          return
+        }
+      }
+    }
     setFSPending(true)
 
     // init/open Untitled project
@@ -812,7 +838,7 @@ export default function MainPage(props: MainPageProps) {
     }
 
     setFSPending(false)
-  }, [onImportProject])
+  }, [onImportProject, ffTree])
   // actions
   const onActions = useCallback(() => {
     if (cmdkOpen) return
@@ -905,14 +931,14 @@ export default function MainPage(props: MainPageProps) {
     window.open('https://guide.rnbw.dev', '_blank', 'noreferrer');
   }, [currentCommand])
   // -------------------------------------------------------------- pos/size for panels --------------------------------------------------------------
-  const [actionsPanelOffsetTop, setActionsPanelOffsetTop] = useState(10)
-  const [actionsPanelOffsetLeft, setActionsPanelOffsetLeft] = useState(10)
+  const [actionsPanelOffsetTop, setActionsPanelOffsetTop] = useState(12)
+  const [actionsPanelOffsetLeft, setActionsPanelOffsetLeft] = useState(12)
   const [actionsPanelWidth, setActionsPanelWidth] = useState(240)
 
-  const [codeViewOffsetBottom, setCodeViewOffsetBottom] = useState('10')
-  const [codeViewOffsetTop, setCodeViewOffsetTop] = useState('calc(66.66vh - 12px)')
-  const [codeViewOffsetLeft, setCodeViewOffsetLeft] = useState(10)
-  const [codeViewHeight, setCodeViewHeight] = useState("33.33")
+  const [codeViewOffsetBottom, setCodeViewOffsetBottom] = useState('12')
+  const [codeViewOffsetTop, setCodeViewOffsetTop] = useState('calc(60vh - 12px)')
+  const [codeViewOffsetLeft, setCodeViewOffsetLeft] = useState(12)
+  const [codeViewHeight, setCodeViewHeight] = useState("40")
   const [codeViewDragging, setCodeViewDragging] = useState(false)
   // -------------------------------------------------------------- other --------------------------------------------------------------
   // detect OS & fetch reference - html. Jumpstart.csv, Actions.csv - restore recent project session - open Untitled project and jumpstart menu ons tartup

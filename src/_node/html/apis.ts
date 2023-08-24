@@ -349,7 +349,16 @@ export const serializeHtml = (tree: TNodeTreeData, htmlReferenceData: THtmlRefer
         nodeHtmlInApp = `<${tagName}${attribsHtmlInApp}>`
       } else {
         nodeHtml = `<${tagName}${attribsHtml}>${childrenHtml}</${tagName}>`
-        nodeHtmlInApp = `<${tagName}${attribsHtmlInApp}>${childrenHtmlInApp}</${tagName}>`
+        //issue : #238
+        if (tagName === "a") {
+          //console event on click
+          attribsHtmlInApp = attribsHtmlInApp.replace("href", "onclick");
+          nodeHtmlInApp = `<${tagName}${attribsHtmlInApp}
+          >
+          ${childrenHtmlInApp}</${tagName}>`;
+        } else {
+          nodeHtmlInApp = `<${tagName}${attribsHtmlInApp}>${childrenHtmlInApp}</${tagName}>`;
+        }
       }
     } else {
       nodeHtml = childrenHtml
@@ -528,19 +537,18 @@ export const checkValidHtml = (content: string): boolean => {
   while (match) {
     let tag = match[0];
     if (tag.startsWith('</')) {
-      let _tag = tag.slice(2, -1).split(' ')[0]
+      let _tag = tag.slice(2, -1).split(' ')[0].replace('\n', '')
       if (noNeedClosingTag.find(_item => _tag === _item) === undefined) {
         closingTags.push(_tag);
       }
     } else {
-      let _tag = tag.slice(1, -1).split(' ')[0]
+      let _tag = tag.slice(1, -1).split(' ')[0].replace('\n', '')
       if (noNeedClosingTag.find(_item => _tag === _item) === undefined) {
         openingTags.push(_tag);
       }
     }
     match = regex.exec(tmpString);
   }
-
   if (openingTags.length !== closingTags.length) {
     hasMismatchedTags = true; // Different number of opening and closing tags
   }
